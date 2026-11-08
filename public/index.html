@@ -1,0 +1,91 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShadowScale Dashboard</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#0b1020;color:#f1f5f9;padding:35px}
+.container{max-width:1100px;margin:auto}
+header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;margin-bottom:35px}
+h1{font-size:28px;margin:0}
+.sub{color:#94a3b8;margin-top:8px}
+.status{color:#4ade80;font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+.card{background:#151e32;border:1px solid #293750;border-radius:14px;padding:24px}
+.card p{color:#94a3b8;margin:0 0 18px}
+.value{font-size:32px;font-weight:bold}
+button{background:#6366f1;color:white;border:0;border-radius:8px;padding:12px 20px;cursor:pointer}
+button:hover{background:#4f46e5}
+.section{margin-top:25px}
+.bar{height:12px;background:#293750;border-radius:10px;overflow:hidden;margin-top:15px}
+.fill{height:100%;background:#818cf8;width:0%;transition:width .4s}
+.match{color:#4ade80}.mismatch{color:#fb7185}
+.footer{color:#64748b;margin-top:35px;font-size:13px}
+@media(max-width:600px){body{padding:20px}h1{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<div>
+<h1>ShadowScale Dashboard</h1>
+<div class="sub">System Metrics & Performance Monitoring</div>
+<div class="status" id="status">● Connecting...</div>
+</div>
+<button onclick="loadMetrics()">Refresh Metrics ↻</button>
+</header>
+
+<div class="grid">
+<div class="card"><p>Total Requests</p><div class="value" id="requests">--</div></div>
+<div class="card"><p>Matches</p><div class="value match" id="matches">--</div></div>
+<div class="card"><p>Mismatches</p><div class="value mismatch" id="mismatches">--</div></div>
+<div class="card"><p>Match Rate</p><div class="value" id="matchRate">--</div></div>
+</div>
+
+<div class="grid section">
+<div class="card"><p>Primary Total Time</p><div class="value" id="primaryTotal">--</div><p>milliseconds</p></div>
+<div class="card"><p>Shadow Total Time</p><div class="value" id="shadowTotal">--</div><p>milliseconds</p></div>
+<div class="card"><p>Average Primary Time</p><div class="value" id="primaryAvg">--</div><p>milliseconds</p></div>
+<div class="card"><p>Average Shadow Time</p><div class="value" id="shadowAvg">--</div><p>milliseconds</p></div>
+</div>
+
+<div class="card section">
+<h3>Match Performance</h3>
+<div class="sub">Percentage of matching responses</div>
+<div class="bar"><div class="fill" id="matchBar"></div></div>
+</div>
+
+<div class="footer">ShadowScale Comparison Engine · Live Metrics</div>
+</div>
+
+<script>
+async function loadMetrics(){
+const status=document.getElementById("status");
+try{
+const response=await fetch("/metrics");
+if(!response.ok) throw new Error("Metrics API unavailable");
+const data=await response.json();
+const rate=data.totalRequests ? (data.matches/data.totalRequests)*100 : 0;
+document.getElementById("requests").textContent=data.totalRequests;
+document.getElementById("matches").textContent=data.matches;
+document.getElementById("mismatches").textContent=data.mismatches;
+document.getElementById("matchRate").textContent=rate.toFixed(1)+"%";
+document.getElementById("primaryTotal").textContent=data.totalPrimaryTime;
+document.getElementById("shadowTotal").textContent=data.totalShadowTime;
+document.getElementById("primaryAvg").textContent=data.averagePrimaryTime.toFixed(1);
+document.getElementById("shadowAvg").textContent=data.averageShadowTime.toFixed(1);
+document.getElementById("matchBar").style.width=rate+"%";
+status.textContent="● Live metrics connected";
+status.style.color="#4ade80";
+}catch(error){
+status.textContent="● Connection error: "+error.message;
+status.style.color="#fb7185";
+}
+}
+loadMetrics();
+setInterval(loadMetrics,5000);
+</script>
+</body>
+</html>
