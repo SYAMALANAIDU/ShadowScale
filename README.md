@@ -1,45 +1,76 @@
-﻿# ShadowScale Dashboard
+﻿\# ShadowScale
 
-A System Metrics and Performance Monitoring Dashboard that compares Primary and Shadow API responses.
+\### AI-Powered Backend Reliability \& Intelligent Traffic Shadowing Platform
 
-## Features
-- Primary and Shadow API comparison
-- Match and mismatch detection
-- Automatic Primary fallback when Shadow fails
-- Response time tracking
-- Live metrics dashboard
-- Automatic dashboard refresh
 
-## Architecture
-- Primary Server: Port 3001
-- Shadow Server: Port 3002
-- Proxy Server: Port 3003
 
-## Dashboard
-Open: http://127.0.0.1:3003/
+ShadowScale is a Node.js and TypeScript-based backend reliability prototype that compares Primary and Shadow API responses, detects behavioral differences, measures performance, and generates diagnostic recommendations.
 
-## API Endpoints
-- GET / – Dashboard UI
-- GET /products – Compare API responses
-- GET /metrics – Performance metrics
 
-## Metrics
-- Total Requests
-- Matches
-- Mismatches
-- Match Rate
-- Primary Total Time
-- Shadow Total Time
-- Average Primary Time
-- Average Shadow Time
 
-## Technologies
-- Node.js
-- TypeScript
-- JavaScript
-- Fastify
-- HTML
-- CSS
+It integrates Gnani AI speech models to enable voice-based incident reporting and spoken diagnostics in Telugu.
 
-## Project Status
-Core API comparison, fallback handling, and live metrics dashboard implemented.
+
+
+\## Key Features
+
+
+
+\- Intelligent Traffic Shadowing with asynchronous shadow requests.
+
+\- Primary and Shadow API response comparison.
+
+\- Structural JSON difference detection.
+
+\- Chaos testing with simulated failures and delays.
+
+\- Performance metrics and live dashboard.
+
+\- Automated reliability diagnostics.
+
+\- Privacy Shield for masking sensitive information.
+
+\- Gnani AI Prisma STT for speech-to-text.
+
+\- Gnani AI Timbre TTS for text-to-speech.
+
+\- Telugu voice-based incident reporting.
+
+
+
+\## Technology Stack
+
+
+
+\- Node.js
+
+\- TypeScript
+
+\- Fastify
+
+\- JavaScript
+
+\- HTML and CSS
+
+\- Gnani AI Prisma STT
+
+\- Gnani AI Timbre TTS
+
+\- dotenv
+
+\- Zod
+
+\- prom-client
+
+
+
+\## Architecture
+
+
+
+| Component | Port | Purpose |
+
+|---|---:|---|
+
+| Health Server | 300
+

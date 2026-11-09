@@ -1,4 +1,4 @@
-﻿node_modules/
+node_modules/
 dist/
 .env
 .env.*
@@ -7,3 +7,5 @@ coverage/
 *.log
 .DS_Store
 Thumbs.db
+*.wav
+src/proxy-server-backup*.ts

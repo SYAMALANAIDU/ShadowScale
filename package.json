@@ -4,15 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "primary": "tsx src/server.ts",
+    "primary": "tsx src/primary.ts",
     "shadow": "tsx src/shadow-server.ts",
-    "proxy": "node src/proxy-server.js"
+    "proxy": "tsx src/proxy-server.ts",
+    "server": "tsx src/server.ts",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "devDependencies": {
     "@types/node": "^26.6.6",
     "tsx": "^4.23.15",

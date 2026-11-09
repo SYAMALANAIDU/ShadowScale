@@ -1,6 +1,6 @@
 ﻿
 import Fastify from "fastify";
-import { recordMetric, getMetrics } from "./metrics/metrics";
+import { recordMetric, getMetrics } from "./metrics/metrics.js";
 
 const app = Fastify({ logger: true });
 

@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -11,23 +12,31 @@ body{margin:0;font-family:Arial,sans-serif;background:#0b1020;color:#f1f5f9;padd
 header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:15px;margin-bottom:35px}
 h1{font-size:28px;margin:0}
 .sub{color:#94a3b8;margin-top:8px}
-.status{color:#4ade80;font-size:14px}
+.status{color:#4ade80;font-size:14px;margin-top:8px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
 .card{background:#151e32;border:1px solid #293750;border-radius:14px;padding:24px}
 .card p{color:#94a3b8;margin:0 0 18px}
 .value{font-size:32px;font-weight:bold}
-button{background:#6366f1;color:white;border:0;border-radius:8px;padding:12px 20px;cursor:pointer}
+button{background:#6366f1;color:white;border:0;border-radius:8px;padding:12px 20px;cursor:pointer;margin:5px}
 button:hover{background:#4f46e5}
+button:disabled{opacity:.45;cursor:not-allowed}
+.stop{background:#be123c}
 .section{margin-top:25px}
 .bar{height:12px;background:#293750;border-radius:10px;overflow:hidden;margin-top:15px}
 .fill{height:100%;background:#818cf8;width:0%;transition:width .4s}
 .match{color:#4ade80}.mismatch{color:#fb7185}
 .footer{color:#64748b;margin-top:35px;font-size:13px}
+.voice-title{margin-top:0}
+.voice-status{color:#a5b4fc;margin:15px 0}
+.result{background:#0b1020;border:1px solid #293750;border-radius:10px;padding:16px;margin-top:15px;white-space:pre-wrap;overflow-wrap:anywhere}
+audio{width:100%;margin-top:15px}
+.small{font-size:13px;color:#94a3b8;line-height:1.6}
 @media(max-width:600px){body{padding:20px}h1{font-size:23px}}
 </style>
 </head>
 <body>
 <div class="container">
+
 <header>
 <div>
 <h1>ShadowScale Dashboard</h1>
@@ -57,7 +66,32 @@ button:hover{background:#4f46e5}
 <div class="bar"><div class="fill" id="matchBar"></div></div>
 </div>
 
-<div class="footer">ShadowScale Comparison Engine · Live Metrics</div>
+<div class="card section">
+<h2 class="voice-title">Gnani AI Voice Assistant</h2>
+<div class="sub">Speak in Telugu or English about a backend incident.</div>
+<p class="small">1. Click Record and describe the incident.<br>
+2. Click Stop Recording.<br>
+3. Click Diagnose & Speak to hear the AI diagnosis.</p>
+
+<div>
+<button id="recordBtn" onclick="startRecording()">● Record</button>
+<button id="stopBtn" class="stop" onclick="stopRecording()" disabled>■ Stop Recording</button>
+<button id="diagnoseBtn" onclick="diagnoseIncident()" disabled>Diagnose & Speak</button>
+</div>
+
+<div class="voice-status" id="voiceStatus">● Voice assistant ready.</div>
+
+<h3>Speech Transcript</h3>
+<div class="result" id="transcript">Your spoken incident will appear here.</div>
+
+<h3>Diagnostic Report</h3>
+<div class="result" id="diagnosis">Diagnosis will appear here.</div>
+
+<h3>Gnani AI Voice Response</h3>
+<audio id="voiceAudio" controls></audio>
+</div>
+
+<div class="footer">ShadowScale Comparison Engine · Live Metrics · Gnani AI Voice Assistant</div>
 </div>
 
 <script>
@@ -74,9 +108,9 @@ document.getElementById("mismatches").textContent=data.mismatches;
 document.getElementById("matchRate").textContent=rate.toFixed(1)+"%";
 document.getElementById("primaryTotal").textContent=data.totalPrimaryTime;
 document.getElementById("shadowTotal").textContent=data.totalShadowTime;
-document.getElementById("primaryAvg").textContent=data.averagePrimaryTime.toFixed(1);
-document.getElementById("shadowAvg").textContent=data.averageShadowTime.toFixed(1);
-document.getElementById("matchBar").style.width=rate+"%";
+document.getElementById("primaryAvg").textContent=Number(data.averagePrimaryTime).toFixed(1);
+document.getElementById("shadowAvg").textContent=Number(data.averageShadowTime).toFixed(1);
+document.getElementById("matchBar").style.width=Math.min(rate,100)+"%";
 status.textContent="● Live metrics connected";
 status.style.color="#4ade80";
 }catch(error){
@@ -86,6 +120,174 @@ status.style.color="#fb7185";
 }
 loadMetrics();
 setInterval(loadMetrics,5000);
+
+let mediaRecorder;
+let audioChunks=[];
+let recordedWav=null;
+let microphoneStream=null;
+
+async function startRecording(){
+try{
+if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+throw new Error("Microphone access is not supported in this browser.");
+}
+microphoneStream=await navigator.mediaDevices.getUserMedia({audio:true});
+audioChunks=[];
+recordedWav=null;
+
+mediaRecorder=new MediaRecorder(microphoneStream);
+mediaRecorder.ondataavailable=(event)=>{
+if(event.data.size>0) audioChunks.push(event.data);
+};
+
+mediaRecorder.onstop=async()=>{
+try{
+document.getElementById("voiceStatus").textContent="Preparing your recording...";
+const recordedBlob=new Blob(audioChunks,{type:mediaRecorder.mimeType});
+recordedWav=await convertToWav(recordedBlob);
+document.getElementById("voiceStatus").textContent="✓ Recording ready. Click Diagnose & Speak.";
+document.getElementById("diagnoseBtn").disabled=false;
+}catch(error){
+document.getElementById("voiceStatus").textContent="Recording conversion failed: "+error.message;
+}
+if(microphoneStream){
+microphoneStream.getTracks().forEach(track=>track.stop());
+microphoneStream=null;
+}
+};
+
+mediaRecorder.start();
+document.getElementById("recordBtn").disabled=true;
+document.getElementById("stopBtn").disabled=false;
+document.getElementById("diagnoseBtn").disabled=true;
+document.getElementById("voiceStatus").textContent="● Recording... Speak now.";
+}catch(error){
+document.getElementById("voiceStatus").textContent="Microphone error: "+error.message;
+}
+}
+
+function stopRecording(){
+if(mediaRecorder && mediaRecorder.state==="recording"){
+mediaRecorder.stop();
+}
+document.getElementById("recordBtn").disabled=false;
+document.getElementById("stopBtn").disabled=true;
+}
+
+async function convertToWav(blob){
+const audioContext=new (window.AudioContext || window.webkitAudioContext)();
+try{
+const arrayBuffer=await blob.arrayBuffer();
+const audioBuffer=await audioContext.decodeAudioData(arrayBuffer);
+const sampleCount=audioBuffer.length;
+const sampleRate=audioBuffer.sampleRate;
+const channels=audioBuffer.numberOfChannels;
+const mono=new Float32Array(sampleCount);
+
+for(let channel=0;channel<channels;channel++){
+const channelData=audioBuffer.getChannelData(channel);
+for(let i=0;i<sampleCount;i++){
+mono[i]+=channelData[i]/channels;
+}
+}
+
+const wavBuffer=new ArrayBuffer(44+sampleCount*2);
+const view=new DataView(wavBuffer);
+
+function writeString(offset,string){
+for(let i=0;i<string.length;i++){
+view.setUint8(offset+i,string.charCodeAt(i));
+}
+}
+
+writeString(0,"RIFF");
+view.setUint32(4,36+sampleCount*2,true);
+writeString(8,"WAVE");
+writeString(12,"fmt ");
+view.setUint32(16,16,true);
+view.setUint16(20,1,true);
+view.setUint16(22,1,true);
+view.setUint32(24,sampleRate,true);
+view.setUint32(28,sampleRate*2,true);
+view.setUint16(32,2,true);
+view.setUint16(34,16,true);
+writeString(36,"data");
+view.setUint32(40,sampleCount*2,true);
+
+let offset=44;
+for(let i=0;i<sampleCount;i++){
+const sample=Math.max(-1,Math.min(1,mono[i]));
+view.setInt16(offset,sample<0?sample*32768:sample*32767,true);
+offset+=2;
+}
+
+return new Blob([wavBuffer],{type:"audio/wav"});
+}finally{
+await audioContext.close();
+}
+}
+
+function blobToBase64(blob){
+return new Promise((resolve,reject)=>{
+const reader=new FileReader();
+reader.onload=()=>{
+const result=String(reader.result);
+resolve(result.split(",")[1]);
+};
+reader.onerror=()=>reject(new Error("Unable to read audio recording."));
+reader.readAsDataURL(blob);
+});
+}
+
+async function diagnoseIncident(){
+if(!recordedWav){
+document.getElementById("voiceStatus").textContent="Please record an incident first.";
+return;
+}
+
+const button=document.getElementById("diagnoseBtn");
+button.disabled=true;
+document.getElementById("voiceStatus").textContent="Sending audio to Gnani AI... Please wait.";
+
+try{
+const audioBase64=await blobToBase64(recordedWav);
+
+const response=await fetch("/voice-diagnostic",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+audioBase64:audioBase64,
+filename:"dashboard-incident.wav"
+})
+});
+
+const result=await response.json();
+
+if(!response.ok || !result.success){
+throw new Error(result.error || "Voice diagnosis failed.");
+}
+
+document.getElementById("transcript").textContent=
+result.transcript || "No transcript returned.";
+
+document.getElementById("diagnosis").textContent=
+JSON.stringify(result.diagnosis,null,2);
+
+if(result.audioBase64){
+document.getElementById("voiceAudio").src=
+"data:"+(result.audioContentType || "audio/wav")+";base64,"+result.audioBase64;
+}
+
+document.getElementById("voiceStatus").textContent=
+"✓ Diagnosis completed. Your Gnani AI voice response is ready.";
+
+}catch(error){
+document.getElementById("voiceStatus").textContent=
+"Error: "+error.message;
+}finally{
+button.disabled=false;
+}
+}
 </script>
 </body>
 </html>

@@ -1,4 +1,5 @@
-﻿import Fastify from "fastify";
+﻿
+import Fastify from "fastify";
 
 const app = Fastify({ logger: true });
 
